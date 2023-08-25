@@ -1,3 +1,19 @@
+#
+.venv
+__pycache__
+train_dataset_Датасет
+test_folder_zip
+test_folder
+*.zip
+
+
+
+
+
+
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
