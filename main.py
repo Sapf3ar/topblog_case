@@ -1,8 +1,11 @@
-# from pydantic import BaseModel
+import os
+from fastapi import FastAPI, File, UploadFile, status
+from fastapi import Response
+from fastapi.exceptions import HTTPException
+import aiofiles
 import sqlite3
-
 import io
-# import torch
+
 import numpy as np
 import zipfile
 
@@ -11,14 +14,8 @@ import pandas as pd
 
 from PIL import Image
 import PIL
-
-
-import os
-from fastapi import FastAPI, File, UploadFile, status
-from fastapi.exceptions import HTTPException
-import aiofiles
-
 import easyocr
+import shutil
 
 CHUNK_SIZE = 1024 * 1024 
 reader = easyocr.Reader(['ru'])
@@ -94,11 +91,11 @@ async def get_text_from_image(file: UploadFile = File(...)):
     '''
     Не удается нормально сделать
     '''
-    data = await file.read()
-    img_np = load_image_into_numpy_array(data) 
-    text = reader.readtext(img_np)
+    # data = await file.read()
+    # img_np = load_image_into_numpy_array(data) 
+    # text = reader.readtext(img_np)
 
-    # IMGSDIR = "./test_images/"
+    IMGSDIR: str= "./test_folder/"
 
     # file.filename = f"{uuid.uuid4()}.jpg"
     # contents = await file.read()
@@ -106,11 +103,46 @@ async def get_text_from_image(file: UploadFile = File(...)):
     # with open(f"{IMGSDIR}{file.filename}", 'wb') as f:
     #     f.write(contents)
 
-    # files = os.listdir(IMGSDIR)
-    # temp_path = f"{IMGSDIR}{files[0]}"
+    files = os.listdir(IMGSDIR)
+    temp_path = f"{IMGSDIR}{files[0]}"
+    text = reader.readtext(temp_path)
 
-    return {'img': file.filename, 'data': text}
+    return {'data': str(text)}
 
+@app.post('/ocr_images')
+async def get_text_from_folder(IMGSDIR: str= "./test_folder/"):
+    try:        
+        files = os.listdir(IMGSDIR)
+        data = {}
+        print(files)
+
+        for file in files:
+            temp_path = f"{IMGSDIR}{file}"
+
+            # !!!,",..??"
+            if file.split('.')[-1] in ['PNG', 'png', 'JPG']:
+                continue
+                # 'test_folder/file_name.png'
+
+                im = Image.open(temp_path)
+                temp_path = temp_path.split('.')[0]+'.jpg'
+                im.save(temp_path)
+            
+            row_text = reader.readtext(temp_path)
+            text=''
+            for place, t, score in row_text:
+                text+=t+' '
+                
+            data[file] = text
+
+
+        # df = pd.DataFrame(data)
+        # df.to_csv('./test.csv')
+
+        return {'status': 'ok?', 'data': data}
+    except:
+        return {'status': 'error'}
+    
 
 @app.post('/sql')
 def pandas_sqlite():

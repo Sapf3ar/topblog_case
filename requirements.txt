@@ -7,4 +7,9 @@ pandas
 easyocr
 uuid
 opencv-python
+python-multipart
+pytest-shutil
+
+
+
 
