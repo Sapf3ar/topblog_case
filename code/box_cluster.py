@@ -41,10 +41,10 @@ def calc_perpendicular(a, b, c):
 
 
 class BoxCluster:
-    def __init__(self, box, tight_scale):
+    def __init__(self, box, tight_scale=3, dist_thresh=0.4):
         self.boxes = np.expand_dims(box, axis=0)
         self.tight_scale = tight_scale
-        self.dist_threshold = np.linalg.norm(box[0] - box[-1]) * 0.8
+        self.dist_threshold = np.linalg.norm(box[0] - box[-1]) * dist_thresh
 
         # Создается новая система координат
         # Точка отсчета - левая верхняя точка прямоугольника box[0]
@@ -183,7 +183,7 @@ class BoxCluster:
         sorted_boxes += sorted(row, key=lambda box: box[0][0])
         return sorted_boxes
 
-def cluster_boxes(dt_boxes, tight_scale):
+def cluster_boxes(dt_boxes, tight_scale, dist_thresh):
     clusters = []
     for box in dt_boxes:
         is_added = False
@@ -192,7 +192,7 @@ def cluster_boxes(dt_boxes, tight_scale):
                 is_added = True
                 break
         if not is_added:
-            clusters.append(BoxCluster(box, tight_scale))
+            clusters.append(BoxCluster(box, tight_scale, dist_thresh))
 
     prev_size = -1
 
@@ -211,9 +211,30 @@ def cluster_boxes(dt_boxes, tight_scale):
 
     return sorted(clusters, key=lambda cluster: -cluster.bias[1])
 
-def sort_boxes(dt_boxes, tight_scale):
-    clusters = cluster_boxes(dt_boxes, tight_scale)
-    ans = []
-    for cluster in clusters:
-        ans.append(cluster.get_sorted_boxes())
-    return ans
+
+
+def box2key(box):
+    return ",".join(np.array(box).astype(int).flatten().astype(str))
+
+def get_clusters(boxes, texts, tight_scale=0.3, dist_thresh=1):
+    clusters = []
+    boxes_map = dict()
+    for box, text in zip(boxes, texts):
+        boxes_map[box2key(box)] = text
+
+    
+    box_clusters = cluster_boxes(boxes, tight_scale=tight_scale, dist_thresh=dist_thresh)
+    
+    for box_cluster in box_clusters:
+        box_text_cluster = []
+        used = set()
+        for box in box_cluster.get_sorted_boxes():
+            key = box2key(box)
+            if key in used:
+                continue
+            used.add(key)
+            text = boxes_map[key]
+            box_text_cluster.append([box, text])
+        clusters.append(box_text_cluster)
+
+    return clusters
