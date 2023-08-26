@@ -1,42 +1,30 @@
-from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import FileResponse
 # from pydantic import BaseModel
+import sqlite3
 
 import io
 # import torch
 import numpy as np
 import zipfile
 
+import sqlite3
+import pandas as pd
+
 from PIL import Image
+import PIL
+
 
 import os
 from fastapi import FastAPI, File, UploadFile, status
 from fastapi.exceptions import HTTPException
 import aiofiles
 
+import easyocr
+
 CHUNK_SIZE = 1024 * 1024 
+reader = easyocr.Reader(['ru'])
 
 os.environ["CUDA_VISIBLE_DEVICES"]="-1"    
-# import tensorflow as tf
-# from object_detection.utils import label_map_util
-# from object_detection.utils import visualization_utils as viz_utils
-
-app = FastAPI(title='Test')
-
-# detect_fn = tf.saved_model.load('saved_model')
-# category_index = label_map_util.create_category_index_from_labelmap("label_map.pbtxt",use_display_name=True)
-
-
-def load_image_into_numpy_array(data):
-    return np.array(Image.open(io.BytesIO(data)))
-
-
-def predict(image):
-     # The input needs to be a tensor, convert it using `tf.convert_to_tensor`.
-    image_np = load_image_into_numpy_array(image)
-
-    return image_np
-
+app = FastAPI(title='SP-topblog')
 
 
 @app.post('/')
@@ -55,7 +43,7 @@ async def upload_zip(file: UploadFile = File(...)):
                 await f.write(chunk)
         await file.close()
 
-        directory_to_extract = './data'
+        directory_to_extract = './'
 
         for address, dirs, files in os.walk('./'):
             for name in files:
@@ -83,6 +71,13 @@ async def upload_zip(file: UploadFile = File(...)):
         pass
     return {"message": f"Successfuly uploaded {file.filename} to {directory}, list's len = {images_list}"}
 
+@app.get('/check')
+async def check_folders():
+    info = {'msg': []}
+    for address, dirs, files in os.walk('./'):
+        info['msg'].append(dirs)
+
+    return info
 
 @app.post("/image")
 async def create_upload_file(image: UploadFile = File(...)):
@@ -92,3 +87,45 @@ async def create_upload_file(image: UploadFile = File(...)):
     #predicted_image.save("Predicted.jpg")
     # return predicted_image
     return {'data': f'the first pixel is {str(img_np[0][0])}'}
+
+
+@app.post('/ocr_image')
+async def get_text_from_image(file: UploadFile = File(...)):
+    '''
+    Не удается нормально сделать
+    '''
+    data = await file.read()
+    img_np = load_image_into_numpy_array(data) 
+    text = reader.readtext(img_np)
+
+    # IMGSDIR = "./test_images/"
+
+    # file.filename = f"{uuid.uuid4()}.jpg"
+    # contents = await file.read()
+
+    # with open(f"{IMGSDIR}{file.filename}", 'wb') as f:
+    #     f.write(contents)
+
+    # files = os.listdir(IMGSDIR)
+    # temp_path = f"{IMGSDIR}{files[0]}"
+
+    return {'img': file.filename, 'data': text}
+
+
+@app.post('/sql')
+def pandas_sqlite():
+    con = sqlite3.connect('test.db') # test.db is exist
+    cur = con.cursor()
+
+    df = pd.DataFrame({
+        'index': [1,5,6,2],
+        'metric': [23,4000,982,11]
+        })
+    
+    df.to_sql('scrinshots', con, index=False)
+    cur.execute("SELECT * FROM scrinshots")
+
+
+
+def load_image_into_numpy_array(data):
+    return np.array(Image.open(io.BytesIO(data)))
