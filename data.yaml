@@ -1,0 +1,6 @@
+path: ../datasets/dataset/
+train: train/
+val: val/
+
+nc: 3
+names: ['blodd_vessel', 'glomerulus', 'unsure']
