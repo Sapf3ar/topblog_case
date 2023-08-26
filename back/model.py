@@ -7,6 +7,9 @@ import logging
 from collections import Counter
 import os
 import pandas as pd
+import sqlite3
+
+
 class Model:
     def __init__(self, onnx_path):
         self.PageClassifier =ort.InferenceSession(onnx_path)
@@ -20,6 +23,33 @@ class Model:
             self.cls_values[imPath] = cls_value
         self.getWrongClasses()
         #self.getEmptyPreds()
+
+    def create_db():
+        df = load_broken_data()
+        conn = sqlite3.connect('temp/database.db')
+        cursor = conn.cursor()
+
+        if not(is_data_exist()):
+
+            create_table_query = '''
+            CREATE TABLE IF NOT EXISTS broken_table (
+                incorrect_images TEXT,
+                reason TEXT
+            )
+            '''
+            cursor.execute(create_table_query)
+
+            for index, row in df.iterrows():
+                cursor.execute("INSERT INTO broken_table  (incorrect_images, reason) VALUES (?, ?)", (row['Некорректные изображения'], row['Причина']))
+
+            select_query = '''
+            SELECT * FROM broken_table
+            '''
+            df = pd.read_sql_query(select_query, conn)
+            conn.commit()
+            conn.close()
+            data_is_here()
+
 
     def get_preds(self, keywords : List, paths : List, reader, platform : str, n_clusters : int = 10):
         self.predicts = {}
@@ -73,18 +103,23 @@ class Model:
             pd.DataFrame(dfInvalidImages).to_csv("temp/broken.csv", index=False)
 
     def inferOCR(self, im):
-    
         pass
     
     def buildGraph(self, imData):
-        
         pass
+    
     def drawBoxes(self, im, singleImData):
+        '''return the same image for a while'''
         
-        pass
+        # ~~~
+        graphs_image = im
+
+        return graphs_image
+    
+
     def toTable(self, dataInferred):
-        
         pass
+    
     def get_classifier_prediction(self, image):
         im_ = cv2.resize(image, (512, 512), cv2.INTER_CUBIC)
         
@@ -103,6 +138,35 @@ def label_to_class(label):
     if label == 3:
         return "dz"
     return "error"
+
+def load_broken_data():
+    '''
+    return pd.DataFrame from temp/broken.csv
+    '''
+    df = pd.read_csv("temp/broken.csv")
+    return df
+
+def is_data_exist():
+    '''
+    Check text file vars.txt: is database already full
+    '''
+    with open('vars.txt', 'r') as f:
+        a = eval(f.readline())
+
+    if a['is_data_exist']==0:
+        return False
+    else:
+        return True
+    
+def data_is_here():
+    '''
+    rewrite text file vars.txt to data is exist
+    '''
+    with open('vars.txt', 'w') as f:
+        f.write("{'is_data_exist': 1}")
+
+
+
 
 
 

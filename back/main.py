@@ -13,9 +13,16 @@ import pandas as pd
 import sqlite3
 from back.model import Model
 import shutil
+
+from starlette.responses import Response
+import io
+from PIL import Image
+
+
 con = sqlite3.connect("tutorial.db")
 CHUNK_SIZE = 1024 * 1024  # adjust the chunk size as desired
 
+from model import Model as _model
 
 app = FastAPI()
 
@@ -25,6 +32,8 @@ class DiskUrl(BaseModel):
 def getAllowedExtensions() -> List[str]:
     return ["jpg", "jpeg", "png", "bmp", "PNG", "JPG"]
 def infer_model(imPaths:List[str]) -> pd.DataFrame:
+    '''
+    '''
     model = Model("back/classifier.onnx")
     model(imPaths)
     pass
@@ -71,6 +80,27 @@ async def upload(file: UploadFile = File(...)):
     return JSONResponse({"validImages":validImages, 
                   "invalidImages":invalidImages})
 
+@app.post('/draw')
+async def draw_image(file: bytes = File(...)):
+    
+    
+    text = ''
+    image = Image.open(io.BytesIO(bytes))
+    graphs_image = _model.drawBoxes(image)
+
+
+    # try:
+    #     if len(byte_image) > 1:
+    #         image, text = byte_image
+    # except Exception as e:
+    #     logging.warning(e)
+    #     image = byte_image
+
+    #bytes_io = io.BytesIO()
+    #segmented_image.save(bytes_io, format="PNG")
+
+    return Response(graphs_image, media_type="image/png")
+
 def cleanOutDir(out_dir:str):
     files = glob.glob(out_dir+"/*")
     for filePath in files:
@@ -103,6 +133,8 @@ def load_yandex(url:DiskUrl):
     infer_model(validImages)
     cleanOutDir(out_dir)
     return filePath
+
+
 
 def getImagesPath(images_path:str) -> Tuple[List[str], List[str]]:
     allowed_ext = getAllowedExtensions()

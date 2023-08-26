@@ -8,3 +8,8 @@ opencv-python
 numpy
 torchvision 
 torchaudio
+sqlite3
+pandas
+starlette
+
+
