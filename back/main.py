@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, status
-from fastapi.responses import FileResponse, Js:
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.exceptions import HTTPException
 from typing import List, Literal, Any, Tuple
 import logging
@@ -37,16 +37,14 @@ async def send_csv_table() -> FileResponse:
                               "train":['3', '4']})
     dummy_csv.to_excel(downloadPath)
     return FileResponse(downloadPath, filename = downloadPath)
-    
+
 @app.post("/upload")
-async def upload_zip(file: UploadFile = File(...)):
+async def upload(file: UploadFile = File(...)):
     '''
     Загрузка зип файла с изображениями
     '''
-    global images_list
     out_dir = "./out_data"
     if "zip" not in file.filename:
-
         filepath = os.path.join(out_dir, os.path.basename(file.filename))
     else:
         filepath = os.path.join('./', os.path.basename(file.filename))
@@ -57,8 +55,7 @@ async def upload_zip(file: UploadFile = File(...)):
         unzip_file(filepath, out_dir)
         
     validImages, invalidImages = getImagesPath(out_dir)
-    
-    data = pd.DataFrame({"validImages":validImages, 
+    return JSONResponse({"validImages":validImages, 
                   "invalidImages":invalidImages})
         
         
