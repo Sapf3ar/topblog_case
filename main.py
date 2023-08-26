@@ -15,7 +15,7 @@ import pandas as pd
 from PIL import Image
 import PIL
 import easyocr
-import shutil
+
 
 CHUNK_SIZE = 1024 * 1024 
 reader = easyocr.Reader(['ru'])
@@ -31,6 +31,9 @@ async def main():
 
 @app.post("/upload")
 async def upload_zip(file: UploadFile = File(...)):
+    '''
+    Загрузка зип файла с изображениями
+    '''
     global images_list
 
     try:
@@ -68,16 +71,60 @@ async def upload_zip(file: UploadFile = File(...)):
         pass
     return {"message": f"Successfuly uploaded {file.filename} to {directory}, list's len = {images_list}"}
 
+
 @app.get('/check')
 async def check_folders():
+    '''
+    Папки в корневой
+    '''
     info = {'msg': []}
     for address, dirs, files in os.walk('./'):
         info['msg'].append(dirs)
-
     return info
 
-@app.post("/image")
+
+@app.post('/ocr_images')
+async def get_text_from_folder(IMGSDIR: str= "./test_folder/"):
+    try:        
+        files = os.listdir(IMGSDIR)
+        data = {'img':[], 'text':[]}
+        data['img'] = files
+
+        print(files)
+        for file in files:
+            temp_path = f"{IMGSDIR}{file}"
+            
+            text = '  '.join(reader.readtext(temp_path,  detail=0))
+            print(text)
+            data['text'].append(text)
+
+
+        # DB надо дебажить
+        # df = pd.DataFrame.from_dict(data)
+        # pandas_to_sql(df)
+
+        return {'status': 'ok', 'data': data}
+    except:
+        return {'status': 'error'}
+
+
+def pandas_to_sql(df):
+    con = sqlite3.connect('test.db') # empty 'test.db' is exist
+    cur = con.cursor()
+    df.to_sql('scrinshots', con, index=False)
+    cur.execute("SELECT * FROM scrinshots")
+
+    
+def load_image_into_numpy_array(data):
+    return np.array(Image.open(io.BytesIO(data)))
+
+
+
+# @app.post("/image")
 async def create_upload_file(image: UploadFile = File(...)):
+    '''
+    Не используется
+    '''
     img_data = await image.read()
     img_np = load_image_into_numpy_array(img_data)
     #print(predicted_image.shape)
@@ -86,78 +133,13 @@ async def create_upload_file(image: UploadFile = File(...)):
     return {'data': f'the first pixel is {str(img_np[0][0])}'}
 
 
-@app.post('/ocr_image')
+# @app.post('/ocr_image')
 async def get_text_from_image(file: UploadFile = File(...)):
     '''
-    Не удается нормально сделать
+    Не дебажилось и не используется
     '''
-    # data = await file.read()
-    # img_np = load_image_into_numpy_array(data) 
-    # text = reader.readtext(img_np)
-
-    IMGSDIR: str= "./test_folder/"
-
-    # file.filename = f"{uuid.uuid4()}.jpg"
-    # contents = await file.read()
-
-    # with open(f"{IMGSDIR}{file.filename}", 'wb') as f:
-    #     f.write(contents)
-
-    files = os.listdir(IMGSDIR)
-    temp_path = f"{IMGSDIR}{files[0]}"
-    text = reader.readtext(temp_path)
-
+    data = await file.read()
+    img_np = load_image_into_numpy_array(data) 
+    text = '  '.join(reader.readtext(img_np,  detail=0))
+    
     return {'data': str(text)}
-
-@app.post('/ocr_images')
-async def get_text_from_folder(IMGSDIR: str= "./test_folder/"):
-    try:        
-        files = os.listdir(IMGSDIR)
-        data = {}
-        print(files)
-
-        for file in files:
-            temp_path = f"{IMGSDIR}{file}"
-
-            # !!!,",..??"
-            if file.split('.')[-1] in ['PNG', 'png', 'JPG']:
-                continue
-                # 'test_folder/file_name.png'
-
-                im = Image.open(temp_path)
-                temp_path = temp_path.split('.')[0]+'.jpg'
-                im.save(temp_path)
-            
-            row_text = reader.readtext(temp_path)
-            text=''
-            for place, t, score in row_text:
-                text+=t+' '
-                
-            data[file] = text
-
-
-        # df = pd.DataFrame(data)
-        # df.to_csv('./test.csv')
-
-        return {'status': 'ok?', 'data': data}
-    except:
-        return {'status': 'error'}
-    
-
-@app.post('/sql')
-def pandas_sqlite():
-    con = sqlite3.connect('test.db') # test.db is exist
-    cur = con.cursor()
-
-    df = pd.DataFrame({
-        'index': [1,5,6,2],
-        'metric': [23,4000,982,11]
-        })
-    
-    df.to_sql('scrinshots', con, index=False)
-    cur.execute("SELECT * FROM scrinshots")
-
-
-
-def load_image_into_numpy_array(data):
-    return np.array(Image.open(io.BytesIO(data)))

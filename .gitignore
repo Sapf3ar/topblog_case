@@ -5,3 +5,5 @@ test_folder_zip
 test_folder
 *.zip
 test_images
+test.py
+test.csv
