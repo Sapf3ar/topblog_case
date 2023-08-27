@@ -48,113 +48,111 @@ if st.button("Get result"):
 # 
 
 
-# st.write("Поиск неправильных изображений")
+st.write("Поиск неправильных изображений")
 
-# @st.cache_data
-# def load_broken_data():
-#     df = pd.read_csv("./broken.csv")
-#     return df
+@st.cache_data
+def load_broken_data():
+    df = pd.read_csv("./broken.csv")
+    return df
 
-# @st.cache_data
-# def is_data_exist():
-#     with open('vars.txt', 'r') as f:
-#         a = eval(f.readline())
+@st.cache_data
+def is_data_exist():
+    with open('vars.txt', 'r') as f:
+        a = eval(f.readline())
 
-#     if a['is_data_exist']==0:
-#         return False
-#     else:
-#         return True
+    if a['is_data_exist']==0:
+        return False
+    else:
+        return True
     
-# def data_is_here():
-#     with open('vars.txt', 'w') as f:
-#         f.write("{'is_data_exist': 1}")
+def data_is_here():
+    with open('vars.txt', 'w') as f:
+        f.write("{'is_data_exist': 1}")
 
 
 # conn = sqlite3.connect('./database.db')
 # cursor = conn.cursor()
 
-# if not(is_data_exist()):
+if False:
     
-#     df = load_broken_data()
+    df = load_broken_data()
 
-#     create_table_query = '''
-#     CREATE TABLE IF NOT EXISTS broken_table (
-#         incorrect_images TEXT,
-#         reason TEXT
-#     )
-#     '''
-#     cursor.execute(create_table_query)
+    create_table_query = '''
+    CREATE TABLE IF NOT EXISTS broken_table (
+        incorrect_images TEXT,
+        reason TEXT
+    )
+    '''
+    cursor.execute(create_table_query)
 
-#     for index, row in df.iterrows():
-#         cursor.execute("INSERT INTO broken_table  (incorrect_images, reason) VALUES (?, ?)", (row['Некорректные изображения'], row['Причина']))
+    for index, row in df.iterrows():
+        cursor.execute("INSERT INTO broken_table  (incorrect_images, reason) VALUES (?, ?)", (row['Некорректные изображения'], row['Причина']))
 
     
-#     conn.commit()
-#     conn.close()
-#     data_is_here()
+    conn.commit()
+    conn.close()
+    data_is_here()
 
 
 # select_query = '''
 #     SELECT * FROM broken_table
 #     '''
-# df = pd.read_sql_query(select_query, conn)
-    
-# st.write('Loaded data:')
-# st.write(df)
 
-# img_names =list(df[df.columns[0]])
+df = pd.read_csv('temp/broken.csv'))
 
-# def show_img(path: str):
-#     st.image(path)
+img_names =list(df[df.columns[0]])
 
-# def find_similar(temptext: str = 't'):
-#     top = {
-#         '1': ['',100],
-#         '2': ['',100],
-#         '3': ['',100]
-#            }
-#     for filename in img_names:
-#         dist_lev = lev(filename, temptext)
-#         dist1 = 0 if temptext in filename else dist_lev + 1
-#         dist = min(dist_lev, dist1)
+def show_img(path: str):
+    st.image(path)
 
-#         # bubble
-#         if dist < top['3'][1] and temptext!= 't':
-#             top['3'][0] = filename
-#             top['3'][1] = dist
+def find_similar(temptext: str = 't'):
+    top = {
+        '1': ['',100],
+        '2': ['',100],
+        '3': ['',100]
+           }
+    for filename in img_names:
+        dist_lev = lev(filename, temptext)
+        dist1 = 0 if temptext in filename else dist_lev + 1
+        dist = min(dist_lev, dist1)
 
-#             if dist < top['2'][1]:
-#                 top['3'][0] = top['2'][0]
-#                 top['3'][1] = top['2'][1]
+        # bubble
+        if dist < top['3'][1] and temptext!= 't':
+            top['3'][0] = filename
+            top['3'][1] = dist
 
-#                 top['2'][0] = filename
-#                 top['2'][1] = dist
+            if dist < top['2'][1]:
+                top['3'][0] = top['2'][0]
+                top['3'][1] = top['2'][1]
 
-#                 if dist < top['1'][1]:
+                top['2'][0] = filename
+                top['2'][1] = dist
+
+                if dist < top['1'][1]:
                     
-#                     top['2'][0] = top['1'][0]
-#                     top['2'][1] = top['1'][1]
+                    top['2'][0] = top['1'][0]
+                    top['2'][1] = top['1'][1]
 
-#                     top['1'][0] = filename
-#                     top['1'][1] = dist
+                    top['1'][0] = filename
+                    top['1'][1] = dist
             
-#     b1 = st.button(top['1'][0], type="primary",key='b1')
-#     b2 = st.button(top['2'][0], type="primary",key='b2')
-#     b3 = st.button(top['3'][0], type="primary",key='b3')
+    b1 = st.button(top['1'][0], type="primary",key='b1')
+    b2 = st.button(top['2'][0], type="primary",key='b2')
+    b3 = st.button(top['3'][0], type="primary",key='b3')
     
-#     if b1:
-#         show_img(top['1'][0])
-#     if b2:
-#         show_img(top['2'][0])
-#     if b3:
-#         show_img(top['3'][0])
+    if b1:
+        show_img(top['1'][0])
+    if b2:
+        show_img(top['2'][0])
+    if b3:
+        show_img(top['3'][0])
 
 
-# text =  st.text_input('Input')
-# logging.warning(text)
+text =  st.text_input('Input')
+logging.warning(text)
 
-# if len(text) > 2:
-#     find_similar(text)
+if len(text) > 2:
+    find_similar(text)
 
 
 
