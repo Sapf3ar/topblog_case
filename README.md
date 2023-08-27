@@ -41,6 +41,7 @@
 <img width="550" alt="Screenshot 2023-08-27 at 10 14 12" src="https://github.com/Sapf3ar/topblog_case/assets/70803676/fc88b733-b1e1-4225-b579-36170a0ad88f">
 
 ## Страктура и запуск:
+```
 .
 ├── back
 │   ├── Dockerfile
@@ -68,6 +69,7 @@
 │   └── data.xlsx
 ├── temp_data.xlsx
 └── tutorial.db
+```
 
 Запуск бека   : - uvicorn back.main:app
 Запуск фронта : - streamlit run front/front.py
