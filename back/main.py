@@ -17,6 +17,7 @@ import shutil
 from starlette.responses import Response
 import io
 from PIL import Image
+import cv2
 
 
 con = sqlite3.connect("tutorial.db")
@@ -80,27 +81,19 @@ async def upload(file: UploadFile = File(...)):
                   "invalidImages":invalidImages})
 
 @app.post('/draw')
-async def draw_image(file: bytes = File(...)):
-    '''
-    change format io
-    '''
+async def draw_image(file: UploadFile = File(...)):
+    
+    contents = await file.read()
 
-    text = ''
-    image = Image.open(io.BytesIO(bytes))
-    graphs_image = Model.drawBoxes(image)
+    with open(file.filename, 'wb') as f:
+        f.write(contents)
 
+    im_ = Model.drawBoxes(file.filename)
 
-    # try:
-    #     if len(byte_image) > 1:
-    #         image, text = byte_image
-    # except Exception as e:
-    #     logging.warning(e)
-    #     image = byte_image
+    imb = cv2.imencode(".png", im_)[1].tobytes()
 
-    #bytes_io = io.BytesIO()
-    #segmented_image.save(bytes_io, format="PNG")
+    return Response(imb, media_type="image/png")
 
-    return Response(graphs_image, media_type="image/png")
 
 def cleanOutDir(out_dir:str):
     files = glob.glob(out_dir+"/*")

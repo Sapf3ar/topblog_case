@@ -108,12 +108,13 @@ class Model:
     def buildGraph(self, imData):
         pass
     
-    def drawBoxes(self, im, singleImData):
+    def drawBoxes(self, img_path: str, singleImData):
         '''return the same image for a while'''
         
         # ~~~
-        graphs_image = im
-
+        graphs_image = cv2.imread(img_path)
+        logging.warning(graphs_image.size)
+        
         return graphs_image
     
 
