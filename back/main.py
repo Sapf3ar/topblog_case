@@ -19,6 +19,7 @@ import io
 from PIL import Image
 import cv2
 
+model = Model("back/classifier.onnx")
 
 con = sqlite3.connect("tutorial.db")
 CHUNK_SIZE = 1024 * 1024  # adjust the chunk size as desired
@@ -88,7 +89,7 @@ async def draw_image(file: UploadFile = File(...)):
     with open(file.filename, 'wb') as f:
         f.write(contents)
 
-    im_ = Model.drawBoxes(file.filename)
+    im_ = model.drawBoxes(img_path=file.filename)
 
     imb = cv2.imencode(".png", im_)[1].tobytes()
 

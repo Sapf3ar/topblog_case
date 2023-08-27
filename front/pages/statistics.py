@@ -35,6 +35,7 @@ if st.button("Get result"):
         bytes_data = input_image.getvalue()
         procces_data = process(bytes_data, url_backend_draw)
 
+
         original_image = Image.open(io.BytesIO(bytes_data))
         graphs_image = Image.open(io.BytesIO(procces_data.content))
 
