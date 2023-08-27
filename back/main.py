@@ -24,10 +24,11 @@ class DiskUrl(BaseModel):
 
 def getAllowedExtensions() -> List[str]:
     return ["jpg", "jpeg", "png", "bmp", "PNG", "JPG"]
+
 def infer_model(imPaths:List[str]) -> pd.DataFrame:
-    model = Model("back/classifier.onnx")
+    model = Model("dataset/classifier.onnx")
     model(imPaths)
-    pass
+    return model
 
 async def writeFile(filePath:str, file:UploadFile) -> str:
     async with aiofiles.open(filePath, 'wb') as f:
@@ -38,11 +39,8 @@ async def writeFile(filePath:str, file:UploadFile) -> str:
 
 @app.get("/download")
 async def send_csv_table() -> FileResponse:
-    
-    downloadPath = "./test.xlsx"
-    dummy_csv = pd.DataFrame({"test":['1', '2'], 
-                              "train":['3', '4']})
-    dummy_csv.to_excel(downloadPath)
+
+    downloadPath = "temp/data.xlsx"
     return FileResponse(downloadPath, filename = downloadPath)
 
 @app.post("/upload")
@@ -66,8 +64,11 @@ async def upload(file: UploadFile = File(...)):
     dfInvalidImages = {"Некорректные изображения":invalidImages,
                        "Причина": [reason]*len(invalidImages)}
     pd.DataFrame(dfInvalidImages).to_csv("temp/broken.csv", index=False)
-    infer_model(validImages)
-    cleanOutDir(out_dir)
+    model = infer_model(validImages)
+    logging.warning(model.predicts)
+    pd.DataFrame(model.predicts).to_excel("temp/data.xlsx")
+
+    #cleanOutDir(out_dir)
     return JSONResponse({"validImages":validImages, 
                   "invalidImages":invalidImages})
 
@@ -82,7 +83,7 @@ def getInputDir(out_dir:str):
         for f in files:
             imagesPaths.append(os.path.join(root, f))
         for subdir in subdirs:
-            for filePath in os.listdir(subdir):
+            for filePath in os.listdir(os.path.join(root, subdir)):
                 if not os.path.isdir(filePath):
                     imagesPaths.append(os.path.join(root, subdir, filePath))
 
