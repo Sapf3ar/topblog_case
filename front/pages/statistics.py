@@ -37,12 +37,12 @@ def data_is_here():
         f.write("{'is_data_exist': 1}")
 
 
-df = load_broken_data()
 conn = sqlite3.connect('./database.db')
 cursor = conn.cursor()
 
-
 if not(is_data_exist()):
+    
+    df = load_broken_data()
 
     create_table_query = '''
     CREATE TABLE IF NOT EXISTS broken_table (
@@ -55,16 +55,17 @@ if not(is_data_exist()):
     for index, row in df.iterrows():
         cursor.execute("INSERT INTO broken_table  (incorrect_images, reason) VALUES (?, ?)", (row['Некорректные изображения'], row['Причина']))
 
-    select_query = '''
-    SELECT * FROM broken_table
-    '''
-    df = pd.read_sql_query(select_query, conn)
     
     conn.commit()
     conn.close()
     data_is_here()
 
 
+select_query = '''
+    SELECT * FROM broken_table
+    '''
+df = pd.read_sql_query(select_query, conn)
+    
 st.write('Loaded data:')
 st.write(df)
 
