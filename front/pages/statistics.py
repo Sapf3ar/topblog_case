@@ -45,6 +45,8 @@ if st.button("Get result"):
         col2.image(graphs_image, use_column_width=True)
 
 
+# 
+
 
 # st.write("Поиск неправильных изображений")
 

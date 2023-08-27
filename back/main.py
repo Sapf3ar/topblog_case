@@ -89,7 +89,8 @@ async def draw_image(file: UploadFile = File(...)):
     with open(file.filename, 'wb') as f:
         f.write(contents)
 
-    im_ = model.drawBoxes(img_path=file.filename)
+    im = cv2.imread(file.filename)
+    im_ = model.drawBoxes(im)
 
     imb = cv2.imencode(".png", im_)[1].tobytes()
 
@@ -148,3 +149,5 @@ def unzip_file(file_path:str, out_dir:str) -> str:
     with zipfile.ZipFile(file_path, 'r') as zip_ref:
         zip_ref.extractall(out_dir)
     return file_path
+
+
