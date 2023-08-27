@@ -71,5 +71,5 @@
 └── tutorial.db
 ```
 
-Запуск бека   : - uvicorn back.main:app
-Запуск фронта : - streamlit run front/front.py
+- Запуск бека   : - uvicorn back.main:app
+- Запуск фронта : - streamlit run front/front.py
