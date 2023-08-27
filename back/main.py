@@ -22,7 +22,6 @@ from PIL import Image
 con = sqlite3.connect("tutorial.db")
 CHUNK_SIZE = 1024 * 1024  # adjust the chunk size as desired
 
-from model import Model as _model
 
 app = FastAPI()
 
@@ -82,11 +81,13 @@ async def upload(file: UploadFile = File(...)):
 
 @app.post('/draw')
 async def draw_image(file: bytes = File(...)):
-    
-    
+    '''
+    change format io
+    '''
+
     text = ''
     image = Image.open(io.BytesIO(bytes))
-    graphs_image = _model.drawBoxes(image)
+    graphs_image = Model.drawBoxes(image)
 
 
     # try:
