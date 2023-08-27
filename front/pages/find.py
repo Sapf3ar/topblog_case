@@ -35,7 +35,7 @@ def data_is_here():
         f.write("{'is_data_exist': 1}")
 
 
-df = pd.read_csv('temp/broken.csv')
+df = load_broken_data()
 
 img_names =list(df[df.columns[0]])
 
