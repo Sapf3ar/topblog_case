@@ -90,7 +90,7 @@ async def draw_image(file: UploadFile = File(...)):
         f.write(contents)
 
     im = cv2.imread(file.filename)
-    im_ = model.drawBoxes(im)
+    # im_ = model.drawBoxes(im)
 
     imb = cv2.imencode(".png", im)[1].tobytes()
 
