@@ -25,3 +25,4 @@
 2) Ошибок пользователя
 3) Интерпретация алгоритма графовой кластеризации
    
+<img width="495" alt="Screenshot 2023-08-27 at 10 13 29" src="https://github.com/Sapf3ar/topblog_case/assets/70803676/e6e1297c-2ce9-4d7a-88bb-83ae225ab7eb">
