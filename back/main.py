@@ -27,8 +27,8 @@ def getAllowedExtensions() -> List[str]:
 
 def infer_model(imPaths:List[str]) -> pd.DataFrame:
     model = Model("dataset/classifier.onnx")
-    model(imPaths)
-    return model
+    outs = model(imPaths)
+    return outs
 
 async def writeFile(filePath:str, file:UploadFile) -> str:
     async with aiofiles.open(filePath, 'wb') as f:
@@ -64,9 +64,8 @@ async def upload(file: UploadFile = File(...)):
     dfInvalidImages = {"Некорректные изображения":invalidImages,
                        "Причина": [reason]*len(invalidImages)}
     pd.DataFrame(dfInvalidImages).to_csv("temp/broken.csv", index=False)
-    model = infer_model(validImages)
-    logging.warning(model.predicts)
-    pd.DataFrame(model.predicts).to_excel("temp/data.xlsx")
+    outs = infer_model(validImages)
+    pd.DataFrame(outs).to_excel("temp/data.xlsx", index=False)
 
     #cleanOutDir(out_dir)
     return JSONResponse({"validImages":validImages, 
@@ -101,8 +100,9 @@ def load_yandex(url:DiskUrl):
     dfInvalidImages = {"Некорректные изображения":invalidImages,
                        "Причина": [reason]*len(invalidImages)}
     pd.DataFrame(dfInvalidImages).to_csv("temp/broken.csv", index=False)
-    infer_model(validImages)
+    outs = infer_model(validImages)
     cleanOutDir(out_dir)
+    pd.DataFrame(outs).to_excel("temp/data.xlsx", index=False)
     return filePath
 
 def getImagesPath(images_path:str) -> Tuple[List[str], List[str]]:

@@ -72,7 +72,7 @@ if st.button("Отправить данные:"):
             name = file.name
             segments = process(bytes_data, backend_upload, name)
             
-    if segments.ok:
+    if segments.ok or ans.ok:
 
         col1, col2 = st.columns(2)
         with col1:            

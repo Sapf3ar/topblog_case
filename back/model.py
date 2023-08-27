@@ -202,7 +202,11 @@ def vk_metric(texts : List) -> int:
         if word.isnumeric():
             nums.append(word)
         elif "," in word:
-            nums.append(word)
+            word = word.split(',')
+            try:
+                nums.append(word[0] + word[1])
+            except:
+                continue
         else:
             s_arr = word.split(' ')
             for s_word in s_arr:
@@ -211,7 +215,6 @@ def vk_metric(texts : List) -> int:
                 elif "K" in s_word:
                     nums.append(word.split()[0] + "000")
     return get_num_pred_vk(nums)
-
 def get_num_pred_vk(nums : List) -> int:
     new_nums = []
     for i, num in enumerate(nums):
@@ -234,6 +237,11 @@ class Model:
             'yt' : ["Подписчик", "подписчики"],
                          #'yt2' : ["Просмотры", "просмотры", "Просмотр", "просмотров"],
             'zn'  : ["дочитывания", "просмотры"]}
+        self.predicts={}
+        self.out_dict = {'vk' : 'Подписчиков',
+           'tg' : 'VR',
+           'yt' : 'Подписчиков',
+           'zn' : 'Просмотры'}
 
     def __call__(self, imagesPath):
         ims = []
@@ -248,15 +256,15 @@ class Model:
                            reader = self.Reader, 
                            platform = cls_value)
             for k, v in preds.items():
-                ims.append(k)
+                ims.append(k.split("/")[-1])
                 values.append(v)
-
+                self.predicts[imPath] = v
             logging.warning(preds)
         
-        self.getWrongClasses()
+        mainClass = self.getWrongClasses()
         self.getEmptyPreds()
         
-        return {"images":ims, "values":values}
+        return {"images":ims, self.out_dict[mainClass]:values}
 
     def get_preds(self, keywords,image ,path,  reader, platform : str, n_clusters : int = 10):
         predicts = {}
@@ -346,7 +354,7 @@ class Model:
                 invalidImages.append(imPath)
         reason = "Изображение из другой соц. сети"
         self.writeBroken(reason, invalidImages)
-
+        return mainClass
     def writeBroken(self, reason:str,images ):
         dfInvalidImages = {"Некорректные изображения":images,
                            "Причина": [reason]*len(images)}
@@ -399,7 +407,9 @@ class Model:
         im_ = cv2.resize(image, (512, 512), cv2.INTER_CUBIC)
         
         im_ = np.expand_dims(im_.T, 0).astype(np.float32)
-        im_ /= 255
+        for i, channel in enumerate(im_):
+            channel = (channel - channel.mean()) / (channel.std() + 1e-6)
+            im_[i] = channel
         output = self.PageClassifier.run(None, {"input":im_})
         return label_to_class(output[0].argmax(1))
 
