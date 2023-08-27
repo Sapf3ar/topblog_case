@@ -373,7 +373,7 @@ class Model:
         n_clusters = 10
         clustered_boxes, clustered_texts = agglomerative_cluster_boxes(boxes, texts, n_clusters)
 
-        visualize_clusters_on_image(im, clustered_boxes.values())
+        
         """make plot with clusters and relations
 
         Args:

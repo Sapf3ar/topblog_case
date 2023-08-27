@@ -1,12 +1,13 @@
 from fastapi import FastAPI, File, UploadFile, status, Request
 import glob
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.exceptions import HTTPException
 from typing import List, Literal, Any, Tuple
 import logging
 import aiofiles
 import os
 import zipfile
+import cv2
 from pydantic import BaseModel
 from back.yadisk import downloadYaDisk
 import pandas as pd
@@ -26,7 +27,7 @@ def getAllowedExtensions() -> List[str]:
     return ["jpg", "jpeg", "png", "bmp", "PNG", "JPG"]
 
 def infer_model(imPaths:List[str]) -> pd.DataFrame:
-    model = Model("dataset/classifier.onnx")
+    model = Model("../dataset/classifier.onnx")
     outs = model(imPaths)
     return outs
 
@@ -44,10 +45,11 @@ async def send_csv_table() -> FileResponse:
     return FileResponse(downloadPath, filename = downloadPath)
 
 @app.post("/upload")
-async def upload(file: UploadFile = File(...)):
+async def upload(file: UploadFile = File(task_type="task_type")):
     '''
     Загрузка зип файла с изображениями
     '''
+    logging.warning(file)
     out_dir = "./out_data"
     if "zip" not in file.filename:
         filepath = os.path.join(out_dir, os.path.basename(file.filename))
@@ -87,6 +89,14 @@ def getInputDir(out_dir:str):
                     imagesPaths.append(os.path.join(root, subdir, filePath))
 
     return imagesPaths
+@app.post('/draw')
+async def draw_image(url:DiskUrl):
+    model = Model("../dataset/classifier.onnx")
+    im = cv2.imread(os.path.join("out_data", url.url))
+    im_ = model.drawBoxes(im)
+    imb = cv2.imencode(".png", im_)[1].tobytes()
+    return Response(imb, media_type="image/png")
+
 
 @app.post("/upload_yandex")
 def load_yandex(url:DiskUrl):

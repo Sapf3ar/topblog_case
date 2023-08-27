@@ -29,12 +29,13 @@ backend_download = "http://127.0.0.1:8000/download"
 backend_upload_yandex = "http://127.0.0.1:8000/upload_yandex"
 
 
-def process(image, server_url: str, filename:str=""):
+def process(image, server_url: str, filename:str="", task_type:str=''):
 
     m = MultipartEncoder(fields={"file": (filename, image, "image")})
-
+    if not task_type:
+        task_type = "automatic"
     r = requests.post(
-        server_url, data=m, headers={"Content-Type": m.content_type}, timeout=8000
+            server_url, data=m, headers={"Content-Type": m.content_type, "task-type":"auto"}, json={"task_type":task_type}, timeout=8000
     )
 
     return r
@@ -58,8 +59,9 @@ if not autoSocialNetwork:
 
 
 url = st.text_input("Введите ссылку на Яндекс.Диск:")
+task_type = task_type if task_type else "auto"
 if st.button("Скачать данные с Яндекс.Диск"):
-    ans = requests.post(backend_upload_yandex, json={"url":url})
+    ans = requests.post(backend_upload_yandex, json={"url":url, "task_type":task_type})
 
 
 files = st.file_uploader("insert data", 
@@ -70,7 +72,7 @@ if st.button("Отправить данные:"):
         for file in files:
             bytes_data = file.getvalue()
             name = file.name
-            segments = process(bytes_data, backend_upload, name)
+            segments = process(bytes_data, backend_upload, name, task_type=task_type)
             
     if segments.ok or ans.ok:
 
